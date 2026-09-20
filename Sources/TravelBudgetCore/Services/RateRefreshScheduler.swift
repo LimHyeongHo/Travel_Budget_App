@@ -2,6 +2,11 @@
 import BackgroundTasks
 import Foundation
 
+/// `BGTask`는 Sendable이 아니지만 `setTaskCompleted`는 어느 스레드에서 호출해도 되므로 상자로 감싸 넘긴다.
+private struct UncheckedSendable<T>: @unchecked Sendable {
+    let value: T
+}
+
 /// 주기적 환율 갱신. 앱 Info.plist의 `BGTaskSchedulerPermittedIdentifiers`에 `taskIdentifier`를 등록해야 한다.
 public enum RateRefreshScheduler {
     public static let taskIdentifier = "com.travelbudget.rateRefresh"
@@ -10,9 +15,9 @@ public enum RateRefreshScheduler {
     public static func register(refresh: @escaping @Sendable () async -> Bool) {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
             schedule()
-            nonisolated(unsafe) let bgTask = task
-            let work = Task { bgTask.setTaskCompleted(success: await refresh()) }
-            bgTask.expirationHandler = { work.cancel() }
+            let box = UncheckedSendable(value: task)
+            let work = Task { box.value.setTaskCompleted(success: await refresh()) }
+            task.expirationHandler = { work.cancel() }
         }
     }
 
