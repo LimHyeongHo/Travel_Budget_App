@@ -28,6 +28,7 @@ jobs:
 
       - name: iOS 시뮬레이터용 앱 빌드
         run: |
+          set -o pipefail
           xcodebuild build \
             -project TravelBudget.xcodeproj \
             -scheme TravelBudget \
