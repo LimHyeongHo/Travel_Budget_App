@@ -1,4 +1,4 @@
-#if canImport(BackgroundTasks)
+#if os(iOS)
 import BackgroundTasks
 import Foundation
 
