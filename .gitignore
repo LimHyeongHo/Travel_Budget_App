@@ -427,3 +427,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# XcodeGen 생성물
+TravelBudget.xcodeproj/
+App/Info.plist
+build/
