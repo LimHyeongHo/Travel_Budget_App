@@ -12,8 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 실패 시 로그 인증 없이도 볼 수 있도록 오류 줄을 주석(annotation)으로 남긴다.
       - name: 패키지 테스트 (macOS)
-        run: swift test
+        run: |
+          swift test 2>&1 | tee test.log && exit 0
+          msg=$(grep -E "error:|✘|Fatal error|Issue recorded" test.log | head -40 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=swift test 실패::$msg"
+          exit 1
 
       - name: XcodeGen 설치 및 프로젝트 생성
         run: |
@@ -26,7 +31,10 @@ jobs:
             -project TravelBudget.xcodeproj \
             -scheme TravelBudget \
             -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log && exit 0
+          msg=$(grep -E "error:" build.log | head -40 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=xcodebuild 실패::$msg"
+          exit 1
 
   # 수동 실행 전용: 서명·아카이브 후 TestFlight(App Store Connect)로 업로드한다.
   testflight:
